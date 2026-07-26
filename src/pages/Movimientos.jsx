@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { obtenerMovimientos, crearMovimiento, eliminarMovimiento } from '../services/movimientoService'
+import { obtenerMovimientos, crearMovimiento, eliminarMovimiento } from '../services/MovimientoService'
 import { obtenerClientes } from '../services/clienteService'
 import { obtenerNota, guardarNota } from '../services/notaService'
 
