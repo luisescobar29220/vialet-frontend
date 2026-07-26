@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { obtenerClientes } from '../services/clienteService'
-import { obtenerMovimientos } from '../services/movimientoService'
+import { obtenerMovimientos } from '../services/MovimientoService'
 import { obtenerProductos } from '../services/productoService'
 
 const mesActual = () => new Date().toISOString().slice(0, 7)
