@@ -27,6 +27,8 @@ function Movimientos() {
     const [mostrarNotas, setMostrarNotas] = useState(false)
     const [contenidoNota, setContenidoNota] = useState('')
     const [guardandoNota, setGuardandoNota] = useState(false)
+    const [busquedaCliente, setBusquedaCliente] = useState('')
+    const [mostrarListaClientes, setMostrarListaClientes] = useState(false)
 
     const cargarDatos = async () => {
         try {
@@ -58,16 +60,24 @@ function Movimientos() {
         setFormData({ ...formData, [e.target.name]: e.target.value })
     }
 
-    const handleSeleccionCliente = (e) => {
-        const valor = e.target.value
-        setClienteSeleccionado(valor)
+    const clientesFiltrados = useMemo(() => {
+        if (!busquedaCliente) return clientes
+        return clientes.filter((c) =>
+            c.nombre.toLowerCase().includes(busquedaCliente.toLowerCase())
+        )
+    }, [clientes, busquedaCliente])
 
-        if (valor === OTRO || valor === '') {
-            setFormData({ ...formData, dni: '', nombre: '' })
-        } else {
-            const cliente = clientes.find((c) => String(c.dni) === valor)
-            setFormData({ ...formData, dni: valor, nombre: cliente?.nombre || '' })
-        }
+    const handleSeleccionarCliente = (cliente) => {
+        setClienteSeleccionado(String(cliente.dni))
+        setFormData({ ...formData, dni: String(cliente.dni), nombre: cliente.nombre })
+        setBusquedaCliente(cliente.nombre)
+        setMostrarListaClientes(false)
+    }
+
+    const handleSeleccionarOtro = () => {
+        setClienteSeleccionado(OTRO)
+        setFormData({ ...formData, dni: '', nombre: busquedaCliente })
+        setMostrarListaClientes(false)
     }
 
     const handleGuardarNota = async () => {
@@ -94,6 +104,7 @@ function Movimientos() {
             await crearMovimiento(payload)
             setFormData(formVacio)
             setClienteSeleccionado('')
+            setBusquedaCliente('')
             setMostrarFormulario(false)
             cargarDatos()
         } catch (err) {
@@ -206,33 +217,43 @@ function Movimientos() {
                     onSubmit={handleSubmit}
                     className="bg-white rounded-xl border border-pink-100 p-6 mb-6 grid grid-cols-2 gap-4"
                 >
-                    <div className="col-span-2">
+                    <div className="col-span-2 relative">
                         <label className="block text-xs text-gray-400 mb-1">Cliente</label>
-                        <select
-                            value={clienteSeleccionado}
-                            onChange={handleSeleccionCliente}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300 bg-white"
-                        >
-                            <option value="">Selecciona un cliente...</option>
-                            {clientes.map((c) => (
-                                <option key={c.dni} value={c.dni}>
-                                    {c.nombre} — DNI {c.dni}
-                                </option>
-                            ))}
-                            <option value={OTRO}>Otro (cliente no registrado)</option>
-                        </select>
-                    </div>
-
-                    {clienteSeleccionado === OTRO && (
                         <input
-                            name="nombre"
-                            value={formData.nombre}
-                            onChange={handleChange}
-                            placeholder="Nombre del cliente"
-                            required
-                            className="col-span-2 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
+                            type="text"
+                            value={busquedaCliente}
+                            onChange={(e) => {
+                                setBusquedaCliente(e.target.value)
+                                setMostrarListaClientes(true)
+                                setClienteSeleccionado('')
+                            }}
+                            onFocus={() => setMostrarListaClientes(true)}
+                            onBlur={() => setTimeout(() => setMostrarListaClientes(false), 150)}
+                            placeholder="Escribe el nombre del cliente..."
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300"
                         />
-                    )}
+                        {mostrarListaClientes && (
+                            <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg mt-1 max-h-48 overflow-y-auto shadow-lg">
+                                {clientesFiltrados.map((c) => (
+                                    <li
+                                        key={c.dni}
+                                        onMouseDown={() => handleSeleccionarCliente(c)}
+                                        className="px-3 py-2 text-sm hover:bg-pink-50 cursor-pointer"
+                                    >
+                                        {c.nombre} — DNI {c.dni}
+                                    </li>
+                                ))}
+                                {busquedaCliente && (
+                                    <li
+                                        onMouseDown={handleSeleccionarOtro}
+                                        className="px-3 py-2 text-sm text-pink-600 hover:bg-pink-50 cursor-pointer border-t border-gray-100"
+                                    >
+                                        + Usar "{busquedaCliente}" (cliente no registrado)
+                                    </li>
+                                )}
+                            </ul>
+                        )}
+                    </div>
 
                     <input
                         name="descripcion"
